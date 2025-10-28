@@ -26,7 +26,7 @@ const POSSystem = () => {
     const [newMessage, setNewMessage] = useState('');
     const [orderNumber, setOrderNumber] = useState('');
     const [orders, setOrders] = useState([]); // ESTADO DEL ADMINISTRADOR
-    const [currentSeason] = useState('halloween'); // Publicidad Estacional
+    const [currentSeason] = useState('navidad'); // Publicidad Estacional
 
     // --- DATOS INICIALES ---
     const seasonalBanners = {
