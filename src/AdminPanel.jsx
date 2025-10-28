@@ -5,11 +5,15 @@ import {
     Edit, Trash2, Download, RefreshCw, Settings, Bell, LogOut,
     Home, Plus, Minus, Menu, X, LogIn
 } from 'lucide-react';
+import ReportModal from './components/admin/ReportModal';
+// NOTA: Asegúrate de tener el archivo ReportModal.jsx en src/components/admin/
 
-const AdminPanel = ({ orders: propOrders, updateOrderStatusAdmin }) => {
-    // --- ESTADOS DE LAYOUT y VISTAS ---
+// CRUCIAL: El componente ahora recibe updateOrderStatusAdmin, setInventory, e inventory
+const AdminPanel = ({ orders: propOrders, updateOrderStatusAdmin, inventory: inventoryFromProps, setInventory }) => {
+    // --- ESTADOS LOCALES AÑADIDOS/CORREGIDOS ---
     const [currentView, setCurrentView] = useState('dashboard');
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+    const [reportModalData, setReportModalData] = useState(null); // ESTADO AÑADIDO
 
     // Inicialización responsiva de la barra lateral
     useEffect(() => {
@@ -27,43 +31,50 @@ const AdminPanel = ({ orders: propOrders, updateOrderStatusAdmin }) => {
 
     // --- ESTADO DE DATOS (CRUCIAL: Pedidos estáticos) ---
     const [orders, setOrders] = useState([
-        { id: 'LIC-001', customer: 'Juan Pérez', total: 1299, status: 'delivered', date: '2025-10-15 14:30', items: [{ name: 'Zacapa 23', quantity: 1, price: 1299 }], phone: '272-123-4567', address: 'Av. Principal 123, Col. Centro', age: 28 },
-        { id: 'LIC-002', customer: 'María González', total: 689, status: 'delivering', date: '2025-10-15 15:45', items: [{ name: 'Johnnie Walker Black', quantity: 1, price: 689 }], phone: '272-987-6543', address: 'Calle Reforma 456, Col. Norte', age: 32 },
-        { id: 'LIC-003', customer: 'Carlos Ramírez', total: 1448, status: 'preparing', date: '2025-10-15 16:20', items: [{ name: 'Grey Goose', quantity: 1, price: 1199 }, { name: 'Absolut', quantity: 1, price: 249 }], phone: '272-555-1234', address: 'Blvd. Cristóbal Colón 789', age: 25 },
-        { id: 'LIC-004', customer: 'Ana Martínez', total: 899, status: 'ready', date: '2025-10-15 17:00', items: [{ name: 'Don Julio Reposado', quantity: 1, price: 899 }], phone: '272-444-5678', address: 'Av. Juárez 234', age: 30 },
-        { id: 'LIC-005', customer: 'Roberto Silva', total: 1098, status: 'preparing', date: '2025-10-15 17:15', items: [{ name: 'Patrón Silver', quantity: 1, price: 1099 }], phone: '272-333-9012', address: 'Calle Madero 567', age: 35 }
+        { id: 'LIC-001', customer: 'Juan Pérez', total: 1299, status: 'delivered', date: '2025-10-15 14:30', items: [{ id: 3, name: 'Zacapa Centenario 23', quantity: 1, price: 1299 }], phone: '272-123-4567', address: 'Av. Principal 123, Col. Centro', age: 28 },
+        { id: 'LIC-002', customer: 'María González', total: 689, status: 'delivering', date: '2025-10-15 15:45', items: [{ id: 1, name: 'Johnnie Walker Black Label', quantity: 1, price: 689 }], phone: '272-987-6543', address: 'Calle Reforma 456, Col. Norte', age: 32 },
+        { id: 'LIC-003', customer: 'Carlos Ramírez', total: 1448, status: 'preparing', date: '2025-10-15 16:20', items: [{ id: 4, name: 'Grey Goose', quantity: 1, price: 1199 }, { id: 7, name: 'Coca Cola 2L', quantity: 1, price: 35 }], phone: '272-555-1234', address: 'Blvd. Cristóbal Colón 789', age: 25 },
+        { id: 'LIC-004', customer: 'Ana Martínez', total: 899, status: 'ready', date: '2025-10-15 17:00', items: [{ id: 5, name: 'Don Julio Reposado', quantity: 1, price: 899 }], phone: '272-444-5678', address: 'Av. Juárez 234', age: 30 },
+        { id: 'LIC-005', customer: 'Roberto Silva', total: 1098, status: 'preparing', date: '2025-10-15 17:15', items: [{ id: 1, name: 'Johnnie Walker Black Label', quantity: 1, price: 699 }], phone: '272-333-9012', address: 'Calle Madero 567', age: 35 },
     ]);
 
     // Sincronización de pedidos si vienen de props
     useEffect(() => {
         if (propOrders) {
-            setOrders(prevOrders => [...propOrders, ...prevOrders.filter(o => !propOrders.some(p => p.id === o.id))]);
+            setOrders(prevOrders => {
+                const staticOrders = prevOrders.filter(o => o.id.startsWith('LIC-'));
+                const newOrders = propOrders.filter(p => !staticOrders.some(s => s.id === p.id));
+                return [...newOrders, ...staticOrders];
+            });
         }
     }, [propOrders]);
 
     const [products, setProducts] = useState([
-        { id: 1, name: 'Johnnie Walker Black Label', price: 689, stock: 15, category: 'Whisky', sales: 45, image: '🥃' },
-        { id: 2, name: 'Jack Daniels', price: 549, stock: 22, category: 'Whisky', sales: 67, image: '🥃' },
-        { id: 3, name: 'Zacapa Centenario 23', price: 1299, stock: 8, category: 'Ron', sales: 23, image: '🍹' },
-        { id: 4, name: 'Grey Goose', price: 1199, stock: 12, category: 'Vodka', sales: 34, image: '🍸' },
-        { id: 5, name: 'Don Julio Reposado', price: 899, stock: 18, category: 'Tequila', sales: 56, image: '🌵' },
-        { id: 6, name: 'Havana Club 7 Años', price: 459, stock: 25, category: 'Ron', sales: 42, image: '🍹' },
-        { id: 7, name: 'Absolut Original', price: 449, stock: 30, category: 'Vodka', sales: 51, image: '🍸' },
-        { id: 8, name: 'Hennessy VS', price: 999, stock: 10, category: 'Brandy', sales: 28, image: '🍷' }
+        { id: 1, name: 'Johnnie Walker Black Label', price: 689, stock: 15, category: 'Whisky', sales: 45, image: '🥃', reorderPoint: 5 },
+        { id: 2, name: 'Jack Daniels', price: 549, stock: 22, category: 'Whisky', sales: 67, image: '🥃', reorderPoint: 8 },
+        { id: 3, name: 'Zacapa Centenario 23', price: 1299, stock: 8, category: 'Ron', sales: 23, image: '🍹', reorderPoint: 3 },
+        { id: 4, name: 'Grey Goose', price: 1199, stock: 12, category: 'Vodka', sales: 34, image: '🍸', reorderPoint: 6 },
+        { id: 5, name: 'Don Julio Reposado', price: 899, stock: 18, category: 'Tequila', sales: 56, image: '🌵', reorderPoint: 5 },
+        { id: 6, name: 'Havana Club 7 Años', price: 459, stock: 25, category: 'Ron', sales: 42, image: '🍹', reorderPoint: 7 },
+        { id: 7, name: 'Coca Cola 2L', price: 35, stock: 50, category: 'Complementos', sales: 50, image: '🥤', reorderPoint: 20 },
+        { id: 8, name: 'Hielos Bolsa 2kg', price: 25, stock: 40, category: 'Complementos', sales: 40, image: '🧊', reorderPoint: 15 },
     ]);
     const [customers] = useState([
         { id: 1, name: 'Juan Pérez', orders: 12, total: 15600, lastOrder: '2025-10-15', email: 'juan@email.com' },
         { id: 2, name: 'María González', orders: 8, total: 9800, lastOrder: '2025-10-15', email: 'maria@email.com' },
-        { id: 3, name: 'Carlos Ramírez', orders: 15, total: 18900, lastOrder: '2025-10-15', email: 'carlos@email.com' },
-        { id: 4, name: 'Ana Martínez', orders: 6, total: 7200, lastOrder: '2025-10-14', email: 'ana@email.com' },
-        { id: 5, name: 'Roberto Silva', orders: 10, total: 12500, lastOrder: '2025-10-13', email: 'roberto@email.com' },
-        { id: 6, name: 'Laura Fernández', orders: 5, total: 6800, lastOrder: '2025-10-12', email: 'laura@email.com' }
     ]);
 
     const [searchTerm, setSearchTerm] = useState('');
     const [filterStatus, setFilterStatus] = useState('all');
     const [dateRange, setDateRange] = useState('today');
     const [selectedOrder, setSelectedOrder] = useState(null);
+
+    // CRUCIAL: Sincronizar Inventario: Si el padre (POSSystem) lo actualiza, reflejarlo aquí.
+    useEffect(() => {
+        if (inventoryFromProps && inventoryFromProps !== products) {
+            setProducts(inventoryFromProps);
+        }
+    }, [inventoryFromProps]);
 
     // --- CÁLCULOS y FUNCIONES ---
     const stats = {
@@ -94,9 +105,16 @@ const AdminPanel = ({ orders: propOrders, updateOrderStatusAdmin }) => {
     };
 
     const updateProductStock = (productId, change) => {
-        setProducts(products.map(product =>
+        const updatedProducts = products.map(product =>
             product.id === productId ? { ...product, stock: Math.max(0, product.stock + change) } : product
-        ));
+        );
+
+        setProducts(updatedProducts);
+
+        // CRUCIAL: Llama al setter del padre (POSSystem) si está disponible
+        if (setInventory) {
+            setInventory(updatedProducts);
+        }
     };
 
     const filteredOrders = orders.filter(order => {
@@ -106,7 +124,69 @@ const AdminPanel = ({ orders: propOrders, updateOrderStatusAdmin }) => {
         return matchesSearch && matchesFilter;
     });
 
-    // --- VISTAS INTERNAS (DEBES DEJAR ESTAS FUNCIONES COMPLETAS EN TU ARCHIVO) ---
+    // FUNCIÓN DE UTILIDAD: Exportar a CSV (Mismo scope que la función de reporte)
+    const exportToCSV = (data, filename = 'reporte_inventario') => {
+        if (!data || data.length === 0) return;
+
+        const headers = Object.keys(data[0]);
+        const csvRows = [
+            headers.join(','),
+            ...data.map(row => headers.map(header => {
+                const value = row[header] === null || row[header] === undefined ? '' : String(row[header]);
+                return `"${value.replace(/"/g, '""')}"`;
+            }).join(','))
+        ];
+
+        const csvString = csvRows.join('\n');
+        const blob = new Blob([csvString], { type: 'text/csv;charset=utf-8;' });
+
+        const link = document.createElement('a');
+        link.href = URL.createObjectURL(blob);
+        link.setAttribute('download', `${filename}.csv`);
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    };
+
+    const exportSalesReport = () => {
+        let reportData = [];
+        const salesMap = {};
+        orders.forEach(order => {
+            order.items.forEach(item => {
+                const itemId = item.id;
+                const quantity = item.quantity;
+
+                if (!salesMap[itemId]) {
+                    salesMap[itemId] = { totalSold: 0, totalRevenue: 0 };
+                }
+                salesMap[itemId].totalSold += quantity;
+                salesMap[itemId].totalRevenue += item.price * quantity;
+            });
+        });
+
+        products.forEach(product => {
+            const salesInfo = salesMap[product.id] || { totalSold: 0, totalRevenue: 0 };
+            const purchaseNeeded = product.reorderPoint > product.stock ? (product.reorderPoint + 5 - product.stock) : 0;
+
+            reportData.push({
+                'ID': product.id,
+                'Producto': product.name,
+                'Categoría': product.category,
+                'Stock Actual': product.stock,
+                'Punto de Reorden': product.reorderPoint,
+                'Cantidad Vendida': salesInfo.totalSold,
+                'Total Ingreso': `$${salesInfo.totalRevenue.toFixed(2)}`,
+                'Comprar (Unidades)': purchaseNeeded,
+            });
+        });
+
+        // Muestra el modal con los datos
+        setReportModalData(reportData);
+    };
+
+
+    // --- VISTAS INTERNAS ---
+
     const DashboardView = () => (
         <div className="space-y-6">
             <div className="flex justify-between items-center">
@@ -114,12 +194,12 @@ const AdminPanel = ({ orders: propOrders, updateOrderStatusAdmin }) => {
                     <h2 className="text-3xl font-bold text-amber-100">Dashboard</h2>
                     <p className="text-amber-400">Vista general de tu negocio</p>
                 </div>
-                <button className="flex items-center gap-2 bg-amber-600 text-white px-6 py-3 rounded-xl font-semibold hover:bg-amber-700 transition shadow-lg">
+                <button onClick={exportSalesReport} className="flex items-center gap-2 bg-amber-600 text-white px-6 py-3 rounded-xl font-semibold hover:bg-amber-700 transition shadow-lg">
                     <Download size={20} />
                     Exportar Reporte
                 </button>
             </div>
-            {/* Tarjetas de Resumen */}
+            {/* ... (resto del DashboardView) ... */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
                 <div className="bg-gradient-to-br from-green-600 to-green-700 rounded-2xl p-4 text-white shadow-xl transform hover:scale-105 transition">
                     <div className="flex items-center justify-between mb-4">
@@ -169,7 +249,7 @@ const AdminPanel = ({ orders: propOrders, updateOrderStatusAdmin }) => {
                         </select>
                     </div>
                     <div className="space-y-4">
-                        {products.sort((a, b) => b.sales - a.sales).slice(0, 5).map((product, idx) => (
+                        {products.sort((a, b) => (b.sales || 0) - (a.sales || 0)).slice(0, 5).map((product, idx) => (
                             <div key={product.id} className="flex items-center gap-4 flex-wrap sm:flex-nowrap justify-between">
                                 <div className="flex items-center gap-4 flex-1 min-w-0">
                                     <div className={`w-10 h-10 rounded-full flex items-center justify-center font-bold text-white flex-shrink-0 ${
@@ -187,17 +267,17 @@ const AdminPanel = ({ orders: propOrders, updateOrderStatusAdmin }) => {
                                     <div className="hidden lg:block w-32 bg-slate-700 rounded-full h-3">
                                         <div
                                             className="bg-gradient-to-r from-amber-500 to-amber-600 h-3 rounded-full transition-all"
-                                            style={{ width: `${(product.sales / 70) * 100}%` }}
+                                            style={{ width: `${(product.sales || 0) / 70 * 100}%` }}
                                         />
                                     </div>
                                     <div>
                                         <p className="font-bold text-amber-100">{product.sales} ventas</p>
-                                        <p className="text-sm text-amber-400">${(product.price * product.sales).toLocaleString()}</p>
+                                        <p className="text-sm text-amber-400">${(product.price * (product.sales || 0)).toLocaleString()}</p>
                                     </div>
                                 </div>
                                 <div className="text-right flex-shrink-0 sm:hidden">
                                     <p className="font-bold text-amber-100">{product.sales} ventas</p>
-                                    <p className="text-sm text-amber-400">${(product.price * product.sales).toLocaleString()}</p>
+                                    <p className="text-sm text-amber-400">${(product.price * (product.sales || 0)).toLocaleString()}</p>
                                 </div>
                             </div>
                         ))}
@@ -226,7 +306,7 @@ const AdminPanel = ({ orders: propOrders, updateOrderStatusAdmin }) => {
         </div>
     );
 
-    const OrdersView = () => (
+    const OrdersView = () => ( /* ... OrdersView code ... */
         <div className="space-y-6">
             <div className="flex justify-between items-center">
                 <div>
@@ -332,7 +412,6 @@ const AdminPanel = ({ orders: propOrders, updateOrderStatusAdmin }) => {
                         </tbody>
                     </table>
 
-                    {/* DIAGNÓSTICO: Mensaje si el array está vacío */}
                     {filteredOrders.length === 0 && (
                         <div className="p-8 text-center text-amber-400">
                             <AlertCircle size={30} className="mx-auto mb-3" />
@@ -373,7 +452,7 @@ const AdminPanel = ({ orders: propOrders, updateOrderStatusAdmin }) => {
                                     <p><span className="font-semibold text-amber-400">Dirección:</span> {selectedOrder.address}</p>
                                 </div>
                             </div>
-                            <div className="bg-slate-700/50 p-4 rounded-xl border border-amber-900/30">
+                            <div className="bg-slate-700/50 p-4 rounded-xl border border-amber-amber-900/30">
                                 <h4 className="font-bold text-amber-100 mb-3 flex items-center gap-2">
                                     <Package className="text-amber-400" size={20} />
                                     Productos
@@ -434,64 +513,64 @@ const AdminPanel = ({ orders: propOrders, updateOrderStatusAdmin }) => {
                 </button>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                {products.map(product => (
-                    <div key={product.id} className="bg-gradient-to-br from-slate-800 to-slate-900 rounded-2xl p-6 border border-amber-900/30 hover:border-amber-700 transition shadow-xl">
-                        <div className="text-6xl text-center mb-4">{product.image}</div>
-                        <h3 className="font-bold text-lg text-amber-100 mb-2">{product.name}</h3>
-                        <p className="text-amber-400 text-sm mb-3">{product.category}</p>
-                        <div className="space-y-3 mb-4">
-                            <div className="flex justify-between items-center">
-                                <span className="text-amber-300 text-sm">Precio:</span>
-                                <span className="text-amber-100 font-bold text-lg">${product.price}</span>
-                            </div>
-                            <div className="flex justify-between items-center">
-                                <span className="text-amber-300 text-sm">Stock:</span>
-                                <div className="flex items-center gap-2">
-                                    <button
-                                        onClick={() => updateProductStock(product.id, -1)}
-                                        className="p-1 bg-red-600 text-white rounded hover:bg-red-700 transition"
-                                    >
-                                        <Minus size={14} />
-                                    </button>
-                                    <span className={`px-3 py-1 rounded-full text-sm font-bold ${
-                                        product.stock < 10 ? 'bg-red-600 text-white' :
-                                            product.stock < 20 ? 'bg-yellow-600 text-white' :
-                                                'bg-green-600 text-white'
-                                    }`}>
-                                        {product.stock}
-                                    </span>
-                                    <button
-                                        onClick={() => updateProductStock(product.id, 1)}
-                                        className="p-1 bg-green-600 text-white rounded hover:bg-green-700 transition"
-                                    >
-                                        <Plus size={14} />
-                                    </button>
+                {products.map(product => {
+                    const lowStock = product.stock <= (product.reorderPoint || 0);
+                    const needsReorder = product.stock < (product.reorderPoint || 0);
+                    const purchaseQuantity = needsReorder ? (product.reorderPoint + 5 - product.stock) : 0;
+
+                    return (
+                        <div key={product.id} className="bg-gradient-to-br from-slate-800 to-slate-900 rounded-2xl p-6 border border-amber-900/30 hover:border-amber-700 transition shadow-xl relative">
+                            {lowStock && (
+                                <div className={`absolute top-0 left-0 right-0 p-2 text-center text-sm font-bold ${needsReorder ? 'bg-red-600' : 'bg-yellow-600'} text-white rounded-t-xl`}>
+                                    {needsReorder ? 'REQUIERE REORDEN' : 'STOCK BAJO'}
+                                </div>
+                            )}
+
+                            <div className="text-6xl text-center mb-4 mt-6">{product.image}</div>
+                            <h3 className="font-bold text-lg text-amber-100 mb-2">{product.name}</h3>
+                            <p className="text-amber-400 text-sm mb-3">{product.category}</p>
+
+                            <div className="space-y-3 mb-4">
+                                <div className="flex justify-between items-center">
+                                    <span className="text-amber-300 text-sm">Stock Actual:</span>
+                                    <span className="text-amber-100 font-bold text-lg">{product.stock}</span>
+                                </div>
+                                <div className="flex justify-between items-center">
+                                    <span className="text-amber-300 text-sm">Punto Reorden:</span>
+                                    <span className="text-amber-400 font-semibold">{product.reorderPoint || 0}</span>
+                                </div>
+                                {needsReorder && (
+                                    <div className="bg-red-900/30 p-2 rounded-lg">
+                                        <span className="text-red-300 text-sm font-semibold">Comprar Urgente: {purchaseQuantity} uds.</span>
+                                    </div>
+                                )}
+                                <div className="flex justify-between items-center">
+                                    <span className="text-amber-300 text-sm">Ventas (Sim.):</span>
+                                    <span className="text-amber-100 font-semibold">{product.sales || 0}</span>
                                 </div>
                             </div>
-                            <div className="flex justify-between items-center">
-                                <span className="text-amber-300 text-sm">Ventas:</span>
-                                <span className="text-amber-100 font-semibold">{product.sales}</span>
+                            <div className="flex gap-2">
+                                <button
+                                    onClick={() => updateProductStock(product.id, -1)}
+                                    className="p-1 bg-red-600 text-white rounded hover:bg-red-700 transition"
+                                >
+                                    <Minus size={14} />
+                                </button>
+                                <button
+                                    onClick={() => updateProductStock(product.id, 1)}
+                                    className="p-1 bg-green-600 text-white rounded hover:bg-green-700 transition"
+                                >
+                                    <Plus size={14} />
+                                </button>
                             </div>
                         </div>
-                        <div className="flex gap-2">
-                            <button
-                                className="flex-1 p-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition flex items-center justify-center gap-1"
-                            >
-                                <Edit size={16} />
-                                <span className="text-sm">Editar</span>
-                            </button>
-                            <button className="flex-1 p-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition flex items-center justify-center gap-1">
-                                <Trash2 size={16} />
-                                <span className="text-sm">Eliminar</span>
-                            </button>
-                        </div>
-                    </div>
-                ))}
+                    );
+                })}
             </div>
         </div>
     );
 
-    const CustomersView = () => (
+    const CustomersView = () => (/* ... CustomersView code ... */
         <div className="space-y-6">
             <div className="flex justify-between items-center">
                 <div>
@@ -537,123 +616,135 @@ const AdminPanel = ({ orders: propOrders, updateOrderStatusAdmin }) => {
 
     // --- RENDERIZADO PRINCIPAL ---
     return (
-        <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
-            {/* Overlay para móvil (cierra el menú al hacer clic fuera) */}
-            {isSidebarOpen && window.innerWidth < 1024 && (
+        <>
+            <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
+                {/* Overlay para móvil (cierra el menú al hacer clic fuera) */}
+                {isSidebarOpen && window.innerWidth < 1024 && (
+                    <div
+                        className="fixed inset-0 bg-black/50 z-20"
+                        onClick={toggleSidebar}
+                    ></div>
+                )}
+
+                {/* ------------------------------------------- */}
+                {/* 1. BARRA LATERAL (fixed) */}
+                {/* ------------------------------------------- */}
                 <div
-                    className="fixed inset-0 bg-black/50 z-20"
-                    onClick={toggleSidebar}
-                ></div>
-            )}
-
-            {/* ------------------------------------------- */}
-            {/* 1. BARRA LATERAL (fixed) */}
-            {/* ------------------------------------------- */}
-            <div
-                className={`
-                    fixed left-0 top-0 h-full w-64 p-4 z-30 transition-all duration-300 ease-in-out
-                    bg-gradient-to-b from-slate-900 to-slate-800 border-r border-amber-900/30
-                    ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'} 
-                    lg:translate-x-0 
-                    lg:block
-                `}
-            >
-                {/* Botón para cerrar (X) - Visible en móvil */}
-                <button
-                    onClick={toggleSidebar}
-                    className="absolute top-4 right-4 text-amber-400 p-2 rounded-full hover:bg-slate-700 z-40 lg:hidden"
+                    className={`
+                        fixed left-0 top-0 h-full w-64 p-4 z-30 transition-all duration-300 ease-in-out
+                        bg-gradient-to-b from-slate-900 to-slate-800 border-r border-amber-900/30
+                        ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'} 
+                        lg:translate-x-0 
+                        lg:block
+                    `}
                 >
-                    <X size={24} />
-                </button>
-
-                <div className="mb-8 pt-2">
-                    <h1 className="text-2xl font-bold text-amber-400 flex items-center gap-2">
-                        🥃 Admin Panel
-                    </h1>
-                    <p className="text-amber-600 text-sm">Licorería Premium</p>
-                </div>
-                <nav className="space-y-2">
-                    {[
-                        { id: 'dashboard', icon: Home, label: 'Dashboard' },
-                        { id: 'orders', icon: Package, label: 'Pedidos' },
-                        { id: 'inventory', icon: BarChart3, label: 'Inventario' },
-                        { id: 'customers', icon: Users, label: 'Clientes' }
-                    ].map(item => {
-                        const Icon = item.icon;
-                        return (
-                            <button
-                                key={item.id}
-                                onClick={() => {
-                                    setCurrentView(item.id);
-                                    if (window.innerWidth < 1024) setIsSidebarOpen(false);
-                                }}
-                                className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl font-semibold transition ${
-                                    currentView === item.id
-                                        ? 'bg-gradient-to-r from-amber-600 to-amber-700 text-white shadow-lg'
-                                        : 'text-amber-400 hover:bg-slate-700'
-                                }`}
-                            >
-                                <Icon size={20} />
-                                {item.label}
-                            </button>
-                        );
-                    })}
-                </nav>
-                <div className="absolute bottom-6 left-4 right-4">
-                    <button className="w-full flex items-center gap-3 px-4 py-3 text-red-400 hover:bg-red-900/30 rounded-xl font-semibold transition">
-                        <LogOut size={20} />
-                        Cerrar Sesión
+                    {/* Botón para cerrar (X) - Visible en móvil */}
+                    <button
+                        onClick={toggleSidebar}
+                        className="absolute top-4 right-4 text-amber-400 p-2 rounded-full hover:bg-slate-700 z-40 lg:hidden"
+                    >
+                        <X size={24} />
                     </button>
+
+                    <div className="mb-8 pt-2">
+                        <h1 className="text-2xl font-bold text-amber-400 flex items-center gap-2">
+                            🥃 Admin Panel
+                        </h1>
+                        <p className="text-amber-600 text-sm">Licorería Premium</p>
+                    </div>
+                    <nav className="space-y-2">
+                        {[
+                            { id: 'dashboard', icon: Home, label: 'Dashboard' },
+                            { id: 'orders', icon: Package, label: 'Pedidos' },
+                            { id: 'inventory', icon: BarChart3, label: 'Inventario' },
+                            { id: 'customers', icon: Users, label: 'Clientes' }
+                        ].map(item => {
+                            const Icon = item.icon;
+                            return (
+                                <button
+                                    key={item.id}
+                                    onClick={() => {
+                                        setCurrentView(item.id);
+                                        if (window.innerWidth < 1024) setIsSidebarOpen(false);
+                                    }}
+                                    className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl font-semibold transition ${
+                                        currentView === item.id
+                                            ? 'bg-gradient-to-r from-amber-600 to-amber-700 text-white shadow-lg'
+                                            : 'text-amber-400 hover:bg-slate-700'
+                                    }`}
+                                >
+                                    <Icon size={20} />
+                                    {item.label}
+                                </button>
+                            );
+                        })}
+                    </nav>
+                    <div className="absolute bottom-6 left-4 right-4">
+                        <button className="w-full flex items-center gap-3 px-4 py-3 text-red-400 hover:bg-red-900/30 rounded-xl font-semibold transition">
+                            <LogOut size={20} />
+                            Cerrar Sesión
+                        </button>
+                    </div>
                 </div>
-            </div>
 
-            {/* BOTÓN DE MENÚ (HAMBURGUESA) FLOTANTE */}
-            {!isSidebarOpen && (
-                <button
-                    onClick={toggleSidebar}
-                    className="fixed top-4 left-4 z-30 p-3 bg-amber-600 rounded-full text-white shadow-lg hover:bg-amber-700 lg:hidden"
-                >
-                    <Menu size={24} />
-                </button>
-            )}
+                {/* BOTÓN DE MENÚ (HAMBURGUESA) FLOTANTE */}
+                {!isSidebarOpen && (
+                    <button
+                        onClick={toggleSidebar}
+                        className="fixed top-4 left-4 z-30 p-3 bg-amber-600 rounded-full text-white shadow-lg hover:bg-amber-700 lg:hidden"
+                    >
+                        <Menu size={24} />
+                    </button>
+                )}
 
-            {/* ------------------------------------------- */}
-            {/* 2. CONTENIDO PRINCIPAL (ml-64 solo en Desktop) */}
-            {/* ------------------------------------------- */}
-            <div className={`p-4 lg:p-8 min-h-screen transition-all duration-300 ease-in-out ml-0 lg:ml-64`}>
+                {/* ------------------------------------------- */}
+                {/* 2. CONTENIDO PRINCIPAL (ml-64 solo en Desktop) */}
+                {/* ------------------------------------------- */}
+                <div className={`p-4 lg:p-8 min-h-screen transition-all duration-300 ease-in-out ml-0 lg:ml-64`}>
 
-                {/* CABECERA Y BOTONES DE CONTROL (AHORA FIJOS EN SU POSICIÓN) */}
-                <div className="relative"> {/* Quitamos sticky top-0 z-10 */}
-                    <div className="bg-gradient-to-r from-amber-900 to-amber-800 rounded-2xl p-6 mb-8 shadow-2xl border border-amber-600 mt-14 lg:mt-0">
-                        <div className="flex justify-between items-center">
-                            <div>
-                                <h2 className="text-2xl font-bold text-amber-100">Bienvenido de nuevo, Admin</h2>
-                                <p className="text-amber-300">Aquí está el resumen de tu negocio hoy</p>
-                            </div>
-                            {/* Botones de Cabecera (Asegurando que no se desborden) */}
-                            <div className="flex items-center gap-2 sm:gap-4">
-                                <button className="relative p-2 bg-slate-700 rounded-full hover:bg-slate-600 transition hidden sm:block">
-                                    <Bell className="text-amber-400" size={20} />
-                                    <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-4 h-4 flex items-center justify-center">3</span>
-                                </button>
-                                <button className="p-2 bg-slate-700 rounded-full hover:bg-slate-600 transition hidden sm:block">
-                                    <Settings className="text-amber-400" size={20} />
-                                </button>
-                                <button className="flex items-center gap-1 sm:gap-2 bg-amber-600 text-white px-3 py-2 rounded-full hover:bg-amber-700 transition text-sm flex-shrink-0">
-                                    <RefreshCw size={16} />
-                                    <span className="hidden sm:inline">Actualizar</span>
-                                </button>
+                    {/* CABECERA Y BOTONES DE CONTROL (NO FLOTANTES) */}
+                    <div className="relative">
+                        <div className="bg-gradient-to-r from-amber-900 to-amber-800 rounded-2xl p-6 mb-8 shadow-2xl border border-amber-600 mt-14 lg:mt-0">
+                            <div className="flex justify-between items-center">
+                                <div>
+                                    <h2 className="text-2xl font-bold text-amber-100">Bienvenido de nuevo, Admin</h2>
+                                    <p className="text-amber-300">Aquí está el resumen de tu negocio hoy</p>
+                                </div>
+                                {/* Botones de Cabecera (Ajustados para no desbordar en móvil) */}
+                                <div className="flex items-center gap-2 sm:gap-4">
+                                    <button className="relative p-2 bg-slate-700 rounded-full hover:bg-slate-600 transition hidden sm:block">
+                                        <Bell className="text-amber-400" size={20} />
+                                        <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-4 h-4 flex items-center justify-center">3</span>
+                                    </button>
+                                    <button className="p-2 bg-slate-700 rounded-full hover:bg-slate-600 transition hidden sm:block">
+                                        <Settings className="text-amber-400" size={20} />
+                                    </button>
+                                    <button className="flex items-center gap-1 sm:gap-2 bg-amber-600 text-white px-3 py-2 rounded-full hover:bg-amber-700 transition text-sm flex-shrink-0">
+                                        <RefreshCw size={16} />
+                                        <span className="hidden sm:inline">Actualizar</span>
+                                    </button>
+                                </div>
                             </div>
                         </div>
                     </div>
+
+                    {/* Contenido (Vistas) */}
+                    {currentView === 'dashboard' && <DashboardView />}
+                    {currentView === 'orders' && <OrdersView />}
+                    {currentView === 'inventory' && <InventoryView />}
+                    {currentView === 'customers' && <CustomersView />}
                 </div>
-                {/* Contenido (Vistas) */}
-                {currentView === 'dashboard' && <DashboardView />}
-                {currentView === 'orders' && <OrdersView />}
-                {currentView === 'inventory' && <InventoryView />}
-                {currentView === 'customers' && <CustomersView />}
             </div>
-        </div>
+
+            {/* --- MODAL DE REPORTE (AÑADIDO AL FINAL) --- */}
+            {reportModalData && (
+                <ReportModal
+                    data={reportModalData}
+                    onClose={() => setReportModalData(null)}
+                    exportToCSV={exportToCSV}
+                />
+            )}
+        </>
     );
 };
 

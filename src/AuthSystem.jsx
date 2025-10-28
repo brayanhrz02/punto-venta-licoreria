@@ -17,15 +17,15 @@ const LandingView = memo(({ setCurrentView, onAdminAccess }) => (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-amber-900 to-slate-900 flex items-center justify-center p-4">
         <div className="max-w-6xl w-full">
 
-            <div className="flex justify-center mb-6">
-                <button
-                    onClick={onAdminAccess}
-                    className="flex items-center gap-2 bg-red-700 text-white px-6 py-3 rounded-full font-bold hover:bg-red-800 transition shadow-xl"
-                >
-                    <Shield size={20} />
-                    Acceso Admin (Demo)
-                </button>
-            </div>
+            {/*<div className="flex justify-center mb-6">*/}
+            {/*    <button*/}
+            {/*        onClick={onAdminAccess}*/}
+            {/*        className="flex items-center gap-2 bg-red-700 text-white px-6 py-3 rounded-full font-bold hover:bg-red-800 transition shadow-xl"*/}
+            {/*    >*/}
+            {/*        <Shield size={20} />*/}
+            {/*        Acceso Admin (Demo)*/}
+            {/*    </button>*/}
+            {/*</div>*/}
 
             <div className="text-center mb-12">
                 <div className="flex items-center justify-center gap-4 mb-6">
